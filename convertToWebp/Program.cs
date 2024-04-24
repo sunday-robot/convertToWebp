@@ -47,4 +47,14 @@ internal class Program
                 return;
         }
     }
+
+    private static void ConvertPng(string fileOrDirectoryPath)
+    {
+        throw new NotImplementedException();
+    }
+
+    private static void ConvertJpeg(string fileOrDirectoryPath)
+    {
+        throw new NotImplementedException();
+    }
 }
