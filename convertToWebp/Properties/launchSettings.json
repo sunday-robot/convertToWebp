@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "convertToWebp": {
+      "commandName": "Project",
+      "commandLineArgs": "test test\\a.png",
+      "workingDirectory": "."
+    }
+  }
+}
