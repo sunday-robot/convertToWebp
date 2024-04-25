@@ -9,6 +9,12 @@ internal class Program
             Convert(arg);
     }
 
+    /// <summary>
+    /// 画像ファイルが指定された場合、その画像ファイルと同じディレクトリに、WEBPファイルを作成する。
+    /// 画像ファイルを含むディレクトリが指定された場合、そのディレクトリ名の末尾に".webp"を追加したディレクトリを作成し、
+    /// この新たなディレクトリに、WEBPファイルを作成する。
+    /// </summary>
+    /// <param name="fileOrDirectoryPath"></param>
     static void Convert(string fileOrDirectoryPath)
     {
         if (File.Exists(fileOrDirectoryPath))
@@ -20,19 +26,6 @@ internal class Program
         }
         else if (Directory.Exists(fileOrDirectoryPath))
         {
-            // 引数に指定されたディレクトリ:
-            // a/
-            // 上記ディレクトリの中:
-            // a/b.jpg
-            // a/c/d.png
-            // a/c/e/f.png
-            // ↓
-            // 新規に以下のディレクトリを作成し、
-            // a.webp/
-            // 以下のファイルを作成する
-            // a.webp/b.webp
-            // a.webp/c/d.webp
-            // a.webp/c/e/f.webp
             var destinationDirectoryPath = fileOrDirectoryPath + ".webp";
             ConvertDirectory(fileOrDirectoryPath, destinationDirectoryPath);
         }
@@ -48,14 +41,10 @@ internal class Program
 
         foreach (var directoryPath in Directory.EnumerateDirectories(sourceDirectoryPath))
         {
-            // a/c\
-            Console.WriteLine(directoryPath);
             ConvertDirectory(directoryPath, Path.Combine(destinationDirectoryPath, Path.GetFileName(directoryPath)));
         }
         foreach (var filePath in Directory.EnumerateFiles(sourceDirectoryPath))
         {
-            // a/b.jpg -> a.webp/b.webp
-            Console.WriteLine(filePath);
             var destinationFilePath = Path.Combine(destinationDirectoryPath, Path.GetFileNameWithoutExtension(filePath) + ".webp");
             ConvertFile(filePath, destinationFilePath);
         }
@@ -64,6 +53,8 @@ internal class Program
     // a/b.jpg, a.webp
     private static void ConvertFile(string sourceFilePath, string destinationFilePath)
     {
+        Console.WriteLine(sourceFilePath);
+
         WebpEncoder encoder;
         var ext = Path.GetExtension(sourceFilePath).ToUpper();
         switch (ext)
