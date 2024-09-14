@@ -6,7 +6,7 @@ internal class Program
     private static void Main(string[] args)
     {
         foreach (var arg in args)
-            Convert(arg);
+            ConvertFileOrDirectory(arg);
     }
 
     /// <summary>
@@ -15,22 +15,36 @@ internal class Program
     /// この新たなディレクトリに、WEBPファイルを作成する。
     /// </summary>
     /// <param name="fileOrDirectoryPath"></param>
-    static void Convert(string fileOrDirectoryPath)
+    static void ConvertFileOrDirectory(string fileOrDirectoryPath)
     {
         if (File.Exists(fileOrDirectoryPath))
         {
+            // 画像ファイルの場合は、そのファイルと同じ場所に、拡張子を".webp"に変えたファイル名でWEBPファイルを作成する。
             var parentDirectoryPath = Path.GetDirectoryName(fileOrDirectoryPath);
-            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileOrDirectoryPath);
-            var destinationFilePath = Path.Combine(parentDirectoryPath, fileNameWithoutExtension + ".webp");
+            if (parentDirectoryPath == null)
+            {
+                // nullが返ることは以下の理由でありえないので何もしない。
+                // Path.GetDirectoryName()がnullを返すのは、以下の二つの場合のみである。
+                // (1) 引数がnullである。
+                // → Convert()の引数が"string?"ではなく"string"なのでnullであるということはあり得ない。
+                // (2) 引数が"/"あるいは"\"である。
+                // → File.Exists()はfalseなので、Path.GetDirectoryName()に渡されることはあり得ない。
+                return;
+            }
+            var webpFileName = Path.GetFileNameWithoutExtension(fileOrDirectoryPath) + ".webp";
+            var destinationFilePath = Path.Combine(parentDirectoryPath, webpFileName);
             ConvertFile(fileOrDirectoryPath, destinationFilePath);
         }
         else if (Directory.Exists(fileOrDirectoryPath))
         {
+            // ディレクトリの場合は、そのディレクトリ名の末尾に".webp"を追加した名前のディレクトリを
+            // 同じ階層に作成し、その中にWEBPファイルを作成する。
             var destinationDirectoryPath = fileOrDirectoryPath + ".webp";
             ConvertDirectory(fileOrDirectoryPath, destinationDirectoryPath);
         }
         else
         {
+            // ファイルもディレクトリもない場合は、警告メッセージを出力する。(エラー終了したりしない。)
             Console.WriteLine($"{fileOrDirectoryPath} does not exist.");
         }
     }
