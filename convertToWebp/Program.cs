@@ -19,7 +19,7 @@ internal class Program
     {
         if (args.Length == 0)
         {
-            Console.WriteLine("Usage: convertToWebp <file | directory>...");
+            Console.WriteLine("Usage: convertToWebp <file or directory>...");
             return;
         }
 
