@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.8.34511.84
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11505.172 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "convertToWebp", "convertToWebp\convertToWebp.csproj", "{ADDEF158-13F2-4467-A6B5-964B978813F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Win32Api", "..\Win32\Win32Api.csproj", "{61B08762-A300-1B69-8C2E-0B2257C7E36F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{ADDEF158-13F2-4467-A6B5-964B978813F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADDEF158-13F2-4467-A6B5-964B978813F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADDEF158-13F2-4467-A6B5-964B978813F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61B08762-A300-1B69-8C2E-0B2257C7E36F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61B08762-A300-1B69-8C2E-0B2257C7E36F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61B08762-A300-1B69-8C2E-0B2257C7E36F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61B08762-A300-1B69-8C2E-0B2257C7E36F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

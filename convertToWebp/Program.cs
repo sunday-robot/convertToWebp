@@ -1,93 +1,125 @@
 ﻿using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
+using System.ComponentModel;
+using Win32Api;
 
 internal class Program
 {
+    /// <summary>
+    /// JPEGファイル用のWebpエンコーダー(JPEGと同様に不可逆)
+    /// </summary>
+    static readonly WebpEncoder lossyEncoder = new();
+
+    /// <summary>
+    /// PNGファイル用のWebpエンコーダー(PNGと同様に可逆)
+    /// </summary>
+    static readonly WebpEncoder losslessEncoder = new() { FileFormat = WebpFileFormatType.Lossless };
+
     private static void Main(string[] args)
     {
+        if (args.Length == 0)
+        {
+            Console.WriteLine("Usage: convertToWebp <file | directory>...");
+            return;
+        }
+
         foreach (var arg in args)
-            ConvertFileOrDirectory(arg);
+        {
+            if (Directory.Exists(arg))
+            {
+                ProcessDirectory(arg);
+            }
+            else if (File.Exists(arg))
+            {
+                ProcessFile(arg);
+            }
+            else
+            {
+                Console.WriteLine($"{arg} does not exist.");
+            }
+        }
     }
 
     /// <summary>
-    /// 画像ファイルが指定された場合、その画像ファイルと同じディレクトリに、WEBPファイルを作成する。
-    /// 画像ファイルを含むディレクトリが指定された場合、そのディレクトリ名の末尾に".webp"を追加したディレクトリを作成し、
-    /// この新たなディレクトリに、WEBPファイルを作成する。
+    /// ディレクトリを再帰的に処理する
     /// </summary>
-    /// <param name="fileOrDirectoryPath"></param>
-    static void ConvertFileOrDirectory(string fileOrDirectoryPath)
+    /// <param name="directoryPath"></param>
+    private static void ProcessDirectory(string directoryPath)
     {
-        if (File.Exists(fileOrDirectoryPath))
+        foreach (var subDirectoryPath in Directory.EnumerateDirectories(directoryPath))
         {
-            // 画像ファイルの場合は、そのファイルと同じ場所に、拡張子を".webp"に変えたファイル名でWEBPファイルを作成する。
-            var parentDirectoryPath = Path.GetDirectoryName(fileOrDirectoryPath);
-            if (parentDirectoryPath == null)
-            {
-                // nullが返ることは以下の理由でありえないので何もしない。
-                // Path.GetDirectoryName()がnullを返すのは、以下の二つの場合のみである。
-                // (1) 引数がnullである。
-                // → Convert()の引数が"string?"ではなく"string"なのでnullであるということはあり得ない。
-                // (2) 引数が"/"あるいは"\"である。
-                // → File.Exists()はfalseなので、Path.GetDirectoryName()に渡されることはあり得ない。
-                return;
-            }
-            var webpFileName = Path.GetFileNameWithoutExtension(fileOrDirectoryPath) + ".webp";
-            var destinationFilePath = Path.Combine(parentDirectoryPath, webpFileName);
-            ConvertFile(fileOrDirectoryPath, destinationFilePath);
+            ProcessDirectory(subDirectoryPath);
         }
-        else if (Directory.Exists(fileOrDirectoryPath))
+        foreach (var filePath in Directory.EnumerateFiles(directoryPath))
         {
-            // ディレクトリの場合は、そのディレクトリ名の末尾に".webp"を追加した名前のディレクトリを
-            // 同じ階層に作成し、その中にWEBPファイルを作成する。
-            var destinationDirectoryPath = fileOrDirectoryPath + ".webp";
-            ConvertDirectory(fileOrDirectoryPath, destinationDirectoryPath);
-        }
-        else
-        {
-            // ファイルもディレクトリもない場合は、警告メッセージを出力する。(エラー終了したりしない。)
-            Console.WriteLine($"{fileOrDirectoryPath} does not exist.");
+            ProcessFile(filePath);
         }
     }
 
-    private static void ConvertDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
+    /// <summary>
+    /// 画像ファイルをwebpに変換する。元の画像ファイルはゴミ箱に移動させる。
+    /// </summary>
+    /// <param name="filePath"></param>
+    private static void ProcessFile(string filePath)
     {
-        _ = Directory.CreateDirectory(destinationDirectoryPath);
-
-        foreach (var directoryPath in Directory.EnumerateDirectories(sourceDirectoryPath))
-        {
-            ConvertDirectory(directoryPath, Path.Combine(destinationDirectoryPath, Path.GetFileName(directoryPath)));
-        }
-        foreach (var filePath in Directory.EnumerateFiles(sourceDirectoryPath))
-        {
-            var destinationFilePath = Path.Combine(destinationDirectoryPath, Path.GetFileNameWithoutExtension(filePath) + ".webp");
-            ConvertFile(filePath, destinationFilePath);
-        }
-    }
-
-    // a/b.jpg, a.webp
-    private static void ConvertFile(string sourceFilePath, string destinationFilePath)
-    {
-        Console.WriteLine(sourceFilePath);
+        Console.WriteLine(filePath);
 
         WebpEncoder encoder;
-        var ext = Path.GetExtension(sourceFilePath).ToUpper();
+        var ext = Path.GetExtension(filePath).ToUpper();
         switch (ext)
         {
             case ".JPG":
-                encoder = new WebpEncoder();
+                encoder = lossyEncoder;
                 break;
             case ".PNG":
-                encoder = new WebpEncoder() { FileFormat = WebpFileFormatType.Lossless };
+                encoder = losslessEncoder;
                 break;
             case ".WEBP":
                 Console.WriteLine($" Skip WEBP file.");
                 return;
             default:
-                Console.WriteLine($" Extension <{ext}> is not supportted.");
+                Console.WriteLine($" Skip unsupported file.");
                 return;
         }
 
-        var image = Image.Load(sourceFilePath);
-        image.SaveAsWebp(destinationFilePath, encoder);
+        try
+        {
+            var image = Image.Load(filePath);
+            image.SaveAsWebp(filePath + ".webp", encoder);
+            SendToRecycleBin(filePath);
+        }
+        catch (UnknownImageFormatException)
+        {
+            Console.WriteLine($" Skip broken file.");
+            return;
+        }
+    }
+
+    /// <summary>
+    /// ファイルをゴミ箱に移動させる
+    /// </summary>
+    /// <param name="path"></param>
+    /// <exception cref="Win32Exception"></exception>
+    /// <exception cref="OperationCanceledException"></exception>
+    static void SendToRecycleBin(string path)
+    {
+        var shf = new Win32.SHFILEOPSTRUCT
+        {
+            wFunc = Win32.FO_DELETE,
+            pFrom = path + '\0' + '\0',
+            fFlags = Win32.FOF_ALLOWUNDO | Win32.FOF_NOCONFIRMATION
+        };
+
+        var result = Win32.SHFileOperation(ref shf);
+        if (result != 0)
+        {
+            throw new Win32Exception(result, $"SHFileOperation failed: {result}");
+        }
+
+        // ユーザー操作などで中断された場合
+        if (shf.fAnyOperationsAborted != 0)
+        {
+            throw new OperationCanceledException("The file operation was aborted.");
+        }
     }
 }
