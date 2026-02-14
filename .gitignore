@@ -1,6 +1,6 @@
 /.vs
 /convertToWebp/bin
 /convertToWebp/obj
-/convertToWebp/test.webp
 /convertToWebp/Properties/PublishProfiles/FolderProfile.pubxml.user
 /convertToWebp/convertToWebp.csproj.user
+/convertToWebp/test
